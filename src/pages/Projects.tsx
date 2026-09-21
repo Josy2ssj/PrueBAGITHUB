@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
-import { Plus, MoreVertical, Copy, Trash2, Folder, ArrowRight } from 'lucide-react';
+import { getAIConfig, setAIConfig } from '../ai';
+import { Plus, MoreVertical, Copy, Trash2, Folder, ArrowRight, Settings, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export function ProjectsPage() {
   const { projects, createProject, deleteProject, duplicateProject, setActiveProject } = useStore();
   const [showNew, setShowNew] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', description: '', industry: '' });
+  const aiConfig = getAIConfig();
 
   const handleCreate = () => {
     if (!form.name.trim()) return;
@@ -35,10 +38,16 @@ export function ProjectsPage() {
             </div>
             <h1 className="text-lg font-semibold tracking-tight">Brand Studio</h1>
           </div>
-          <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2">
-            <Plus size={14} />
-            New Project
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setShowSettings(true)} className="btn-secondary flex items-center gap-2">
+              <Settings size={14} />
+              AI Settings
+            </button>
+            <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2">
+              <Plus size={14} />
+              New Project
+            </button>
+          </div>
         </div>
       </header>
 
@@ -185,6 +194,114 @@ export function ProjectsPage() {
           </div>
         </div>
       )}
+
+      {/* AI Settings Modal */}
+      {showSettings && <AISettingsModal onClose={() => setShowSettings(false)} />}
+    </div>
+  );
+}
+
+function AISettingsModal({ onClose }: { onClose: () => void }) {
+  const [config, setConfig] = useState(getAIConfig());
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    setAIConfig(config);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 fade-in" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-[var(--color-surface)] rounded-lg flex items-center justify-center">
+            <Settings size={18} />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">AI Configuration</h2>
+            <p className="text-xs text-[var(--color-text-secondary)]">Connect a real AI provider</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="label mb-1.5 block">Provider</label>
+            <select
+              className="input-field"
+              value={config.provider}
+              onChange={(e) => setConfig({ ...config, provider: e.target.value as any, apiKey: '', model: '' })}
+            >
+              <option value="none">None (AI disabled)</option>
+              <option value="openai">OpenAI (GPT-4o)</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+            </select>
+          </div>
+
+          {config.provider !== 'none' && (
+            <>
+              <div>
+                <label className="label mb-1.5 block">API Key</label>
+                <input
+                  type="password"
+                  className="input-field font-mono text-xs"
+                  placeholder={config.provider === 'openai' ? 'sk-...' : 'sk-ant-...'}
+                  value={config.apiKey}
+                  onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
+                />
+                <p className="text-[10px] text-[var(--color-text-tertiary)] mt-1">
+                  Your key is stored locally in your browser. Never sent to our servers.
+                </p>
+              </div>
+
+              <div>
+                <label className="label mb-1.5 block">Model</label>
+                <input
+                  type="text"
+                  className="input-field text-xs"
+                  placeholder={config.provider === 'openai' ? 'gpt-4o' : 'claude-3-5-sonnet-20241022'}
+                  value={config.model}
+                  onChange={(e) => setConfig({ ...config, model: e.target.value })}
+                />
+                <p className="text-[10px] text-[var(--color-text-tertiary)] mt-1">
+                  Leave empty for default model
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {config.provider === 'none' && (
+          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle size={14} className="text-amber-600 mt-0.5 shrink-0" />
+              <div className="text-xs text-amber-800">
+                <p className="font-medium mb-1">AI is disabled</p>
+                <p>Without an AI provider, you can still use all design tools manually, but AI-powered features (analysis, suggestions, copilot) will not work.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {config.provider !== 'none' && config.apiKey && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 size={14} className="text-green-600 mt-0.5 shrink-0" />
+              <div className="text-xs text-green-800">
+                <p className="font-medium">AI is configured</p>
+                <p className="mt-0.5">Using {config.provider === 'openai' ? 'OpenAI' : 'Anthropic'} with {config.model || 'default model'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-end gap-3 mt-8">
+          <button onClick={onClose} className="btn-secondary">Close</button>
+          <button onClick={handleSave} className="btn-primary">
+            {saved ? '✓ Saved' : 'Save Configuration'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
-// AI Provider Architecture - Abstracted from specific providers
-import type { Project, ColorToken, TypographySystem, Pattern, PhotographyDirection } from './types';
+// AI Provider - Real API Integration
+import type { Project } from './types';
 
 export interface AIProvider {
   name: string;
@@ -60,148 +60,424 @@ export interface ReviewResult {
   actionable: boolean;
 }
 
-// Mock Provider - clearly identified as development/demo
-export class MockAIProvider implements AIProvider {
-  name = 'Brand Studio AI (Demo)';
+export interface AIConfig {
+  provider: 'openai' | 'anthropic' | 'none';
+  apiKey: string;
+  model: string;
+}
+
+// Get config from localStorage
+export function getAIConfig(): AIConfig {
+  const stored = localStorage.getItem('brand-studio-ai-config');
+  if (stored) {
+    return JSON.parse(stored);
+  }
+  return { provider: 'none', apiKey: '', model: '' };
+}
+
+export function setAIConfig(config: AIConfig) {
+  localStorage.setItem('brand-studio-ai-config', JSON.stringify(config));
+}
+
+// OpenAI Provider
+class OpenAIProvider implements AIProvider {
+  name = 'OpenAI';
   available = true;
+  private apiKey: string;
+  private model: string;
+
+  constructor(apiKey: string, model: string = 'gpt-4o') {
+    this.apiKey = apiKey;
+    this.model = model;
+  }
+
+  private async callAI(systemPrompt: string, userPrompt: string): Promise<any> {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'OpenAI API error');
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+    
+    // Try to parse as JSON
+    try {
+      return JSON.parse(content);
+    } catch {
+      return content;
+    }
+  }
 
   async analyzeLogo(_imageData: string): Promise<LogoAnalysisResult> {
-    await delay(1500);
-    return {
-      geometry: ['circles', 'curves', 'negative-space'],
-      shapes: ['circle', 'arc', 'triangle'],
-      angles: [0, 45, 90, 180],
-      colors: ['#2563EB', '#1E40AF', '#60A5FA'],
-      complexity: 'moderate',
-      symmetry: 'bilateral',
-      suggestions: [
-        'Consider creating a simplified icon variant for favicon use.',
-        'The negative space in the center could be emphasized as a brand element.',
-        'At 24px, the inner details may merge. Test reduction carefully.',
-      ],
-    };
+    const systemPrompt = `You are a professional brand designer analyzing a logo. Provide structured analysis in JSON format.`;
+    const userPrompt = `Analyze this logo and return JSON with:
+- geometry: array of geometric elements detected (e.g. ["circles", "curves", "negative-space"])
+- shapes: array of shapes (e.g. ["circle", "arc", "triangle"])
+- angles: array of key angles in degrees
+- colors: array of hex colors detected
+- complexity: "simple" | "moderate" | "complex"
+- symmetry: "symmetric" | "asymmetric" | "bilateral"
+- suggestions: array of 3-5 professional suggestions for logo improvement
+
+Return ONLY valid JSON, no markdown.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
   }
 
   async generateColors(brief: any, logoColors: string[]): Promise<ColorSuggestion[]> {
-    await delay(1200);
-    const personality = brief?.personality?.[0] || 'professional';
-    const base = logoColors[0] || '#2563EB';
-    
-    if (personality === 'playful' || personality === 'creative') {
-      return [
-        { hex: base, role: 'primary', reasoning: 'Extracted from your logo — anchors the identity.' },
-        { hex: '#F59E0B', role: 'accent', reasoning: 'Warm accent creates energy and draws attention to CTAs.' },
-        { hex: '#F8FAFC', role: 'background', reasoning: 'Near-white background keeps focus on content.' },
-        { hex: '#1E293B', role: 'text', reasoning: 'Deep slate for comfortable reading without harsh black.' },
-        { hex: '#E2E8F0', role: 'surface', reasoning: 'Subtle surface color for cards and elevated elements.' },
-        { hex: '#64748B', role: 'neutral', reasoning: 'Mid-tone for secondary text and borders.' },
-      ];
-    }
-    return [
-      { hex: base, role: 'primary', reasoning: 'Extracted from your logo — anchors the identity.' },
-      { hex: adjustBrightness(base, -20), role: 'secondary', reasoning: 'Darker variant for depth and hover states.' },
-      { hex: '#F97316', role: 'accent', reasoning: 'Complementary warm tone creates visual interest without competing.' },
-      { hex: '#FAFAFA', role: 'background', reasoning: 'Clean background that lets your brand color breathe.' },
-      { hex: '#18181B', role: 'text', reasoning: 'Near-black for maximum readability.' },
-      { hex: '#F4F4F5', role: 'surface', reasoning: 'Subtle surface for cards and containers.' },
-      { hex: '#71717A', role: 'neutral', reasoning: 'Balanced neutral for supporting elements.' },
-    ];
+    const systemPrompt = `You are a professional brand color expert. Generate a cohesive color palette based on brand strategy.`;
+    const userPrompt = `Brand: ${brief?.product || 'Unknown'}
+Industry: ${brief?.industry || 'General'}
+Personality: ${brief?.personality?.join(', ') || 'Professional'}
+Audience: ${brief?.audience || 'General'}
+Logo colors: ${logoColors.join(', ')}
+
+Generate a professional color palette with 6-7 colors. Return JSON array with objects:
+- hex: color in hex format (e.g. "#2563EB")
+- role: "primary" | "secondary" | "accent" | "neutral" | "background" | "surface" | "text"
+- reasoning: brief explanation of why this color works
+
+Return ONLY valid JSON array, no markdown.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
   }
 
-  async suggestTypography(brief: any, _personality: string[]): Promise<TypographySuggestion[]> {
-    await delay(1000);
-    const industry = brief?.industry || 'general';
-    
-    const directions: Record<string, TypographySuggestion[]> = {
-      technology: [
-        { family: 'Inter', role: 'body', reasoning: 'Highly legible, modern, designed for screens.', pairing: 'Space Grotesk' },
-        { family: 'Space Grotesk', role: 'display', reasoning: 'Geometric personality complements tech brands.', pairing: 'Inter' },
-      ],
-      luxury: [
-        { family: 'Playfair Display', role: 'display', reasoning: 'Elegant serifs communicate premium positioning.', pairing: 'Lato' },
-        { family: 'Lato', role: 'body', reasoning: 'Clean sans-serif that lets display type shine.', pairing: 'Playfair Display' },
-      ],
-      default: [
-        { family: 'DM Sans', role: 'body', reasoning: 'Friendly yet professional, excellent screen legibility.', pairing: 'DM Serif Display' },
-        { family: 'DM Serif Display', role: 'display', reasoning: 'Distinctive character without being decorative.', pairing: 'DM Sans' },
-      ],
-    };
+  async suggestTypography(brief: any, personality: string[]): Promise<TypographySuggestion[]> {
+    const systemPrompt = `You are a typography expert for brand identity. Suggest font pairings.`;
+    const userPrompt = `Brand personality: ${personality.join(', ')}
+Industry: ${brief?.industry || 'General'}
+Tone: ${brief?.tone || 'Professional'}
 
-    return directions[industry] || directions.default;
+Suggest 2 fonts (one for display/headings, one for body text) from Google Fonts. Return JSON array:
+- family: font name (must be available on Google Fonts)
+- role: "display" | "body"
+- reasoning: why this font fits the brand
+- pairing: what it pairs well with
+
+Return ONLY valid JSON array, no markdown.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
   }
 
   async generatePatterns(project: Project): Promise<PatternSuggestion[]> {
-    await delay(1200);
-    return [
-      { name: 'Geometric Grid', direction: 'geometric', description: 'Repeating modular units derived from logo geometry.', derivedFrom: 'Logo proportions and angles' },
-      { name: 'Flow Lines', direction: 'organic', description: 'Curved lines inspired by the logo\'s arc elements.', derivedFrom: 'Logo curves and negative space' },
-      { name: 'Signal Marks', direction: 'expressive', description: 'Bold graphic marks that can be placed strategically.', derivedFrom: 'Logo iconography and shapes' },
-    ];
+    const systemPrompt = `You are a brand identity designer creating pattern concepts.`;
+    const userPrompt = `Brand: ${project.name}
+Industry: ${project.industry}
+Brief: ${JSON.stringify(project.brief)}
+
+Suggest 3 pattern directions derived from the brand identity. Return JSON array:
+- name: pattern name
+- direction: "geometric" | "organic" | "expressive"
+- description: what the pattern looks like
+- derivedFrom: which brand element it derives from
+
+Return ONLY valid JSON array, no markdown.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
   }
 
   async suggestPhotography(brief: any, colors: string[]): Promise<PhotographySuggestion> {
-    await delay(1000);
-    return {
-      subjects: ['Product in context', 'People interacting', 'Details and textures', 'Architecture and spaces'],
-      lighting: 'Natural, soft directional light. Avoid harsh flash.',
-      mood: 'Authentic, considered, slightly aspirational.',
-      treatment: `Slight desaturation with ${colors[0] || 'brand color'} color cast in shadows.`,
-      references: ['Kinfolk magazine', 'Aesop campaigns', 'Muji visual language'],
-    };
+    const systemPrompt = `You are an art director defining photography guidelines for a brand.`;
+    const userPrompt = `Brand: ${brief?.product || 'Unknown'}
+Personality: ${brief?.personality?.join(', ') || 'Professional'}
+Colors: ${colors.join(', ')}
+
+Define photography direction. Return JSON:
+- subjects: array of 4 appropriate subjects
+- lighting: lighting style description
+- mood: overall mood description
+- treatment: color treatment description
+- references: array of 3 reference sources (magazines, brands, styles)
+
+Return ONLY valid JSON, no markdown.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
   }
 
   async chat(messages: { role: string; content: string }[], context: Project): Promise<string> {
-    await delay(800);
-    const lastMessage = messages[messages.length - 1]?.content || '';
-    
-    if (lastMessage.includes('color') || lastMessage.includes('palette')) {
-      return `Looking at ${context.name}'s current palette, I notice the primary and secondary colors have similar visual weight. Consider using the secondary at reduced opacity or saturation to create clearer hierarchy. The accent color is working well as a call-to-action driver.`;
+    const systemPrompt = `You are a creative AI assistant for brand identity design. You know everything about the current project:
+- Brand: ${context.name}
+- Industry: ${context.industry}
+- Brief: ${JSON.stringify(context.brief)}
+- Colors: ${context.colors ? context.colors.tokens.map(t => `${t.name}: ${t.hex}`).join(', ') : 'Not defined'}
+- Typography: ${context.typography ? `${context.typography.display?.family || 'Not set'} / ${context.typography.body?.family || 'Not set'}` : 'Not defined'}
+- Progress: ${Object.entries(context.progress).map(([k, v]) => `${k}: ${v}`).join(', ')}
+
+Provide professional, specific, actionable advice. Be concise but insightful. Reference the actual brand context. Don't be generic.`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages,
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'OpenAI API error');
     }
-    if (lastMessage.includes('typography') || lastMessage.includes('font')) {
-      return `Your current type system has good contrast between display and body. One consideration: the line-height on body text could increase slightly to 1.6 for better readability in longer passages. The letter-spacing on your display font is appropriate for its use.`;
-    }
-    if (lastMessage.includes('logo')) {
-      return `The logo analysis shows good geometric foundations. The bilateral symmetry provides stability. I'd recommend testing it at 16px to ensure the key identifying feature remains visible. Consider whether you need a monochrome version for single-color applications.`;
-    }
-    return `I've reviewed the current state of ${context.name}. The identity is developing coherently. The main areas to focus on next are establishing the graphic system and ensuring all applications maintain consistency. Would you like me to analyze any specific element in more detail?`;
+
+    const data = await response.json();
+    return data.choices[0].message.content;
   }
 
   async reviewDesign(element: any, _context: Project): Promise<ReviewResult[]> {
-    await delay(1000);
-    return [
-      { type: 'principle', category: 'hierarchy', title: 'Visual Weight', description: 'Consider increasing the size difference between primary and secondary elements to strengthen hierarchy.', severity: 'medium', actionable: true },
-      { type: 'recommendation', category: 'spacing', title: 'Grouping', description: 'Elements that belong together could be closer. Current spacing doesn\'t clearly communicate relationships.', severity: 'low', actionable: true },
-      { type: 'issue', category: 'contrast', title: 'Text Readability', description: 'This text-background combination may not meet WCAG AA for normal text sizes.', severity: 'high', actionable: true },
-    ];
+    const systemPrompt = `You are a design reviewer providing professional feedback.`;
+    const userPrompt = `Review this design element: ${JSON.stringify(element)}
+
+Provide 3 specific, actionable design issues or recommendations. Return JSON array:
+- type: "issue" | "principle" | "recommendation"
+- category: design category (e.g. "hierarchy", "contrast", "spacing")
+- title: short title
+- description: specific description of the issue
+- severity: "low" | "medium" | "high"
+- actionable: boolean
+
+Return ONLY valid JSON array, no markdown.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
   }
 }
 
-// Provider registry
-let currentProvider: AIProvider = new MockAIProvider();
+// Anthropic Provider
+class AnthropicProvider implements AIProvider {
+  name = 'Anthropic';
+  available = true;
+  private apiKey: string;
+  private model: string;
 
-export function getAIProvider(): AIProvider {
-  return currentProvider;
+  constructor(apiKey: string, model: string = 'claude-3-5-sonnet-20241022') {
+    this.apiKey = apiKey;
+    this.model = model;
+  }
+
+  private async callAI(systemPrompt: string, userPrompt: string): Promise<any> {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: this.model,
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [
+          { role: 'user', content: userPrompt },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Anthropic API error');
+    }
+
+    const data = await response.json();
+    const text = data.content[0].text;
+    
+    // Try to parse as JSON, otherwise return as string
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
+  }
+
+  async analyzeLogo(_imageData: string): Promise<LogoAnalysisResult> {
+    const systemPrompt = `You are a professional brand designer analyzing a logo. Provide structured analysis in JSON format.`;
+    const userPrompt = `Analyze this logo and return JSON with:
+- geometry: array of geometric elements detected
+- shapes: array of shapes
+- angles: array of key angles in degrees
+- colors: array of hex colors detected
+- complexity: "simple" | "moderate" | "complex"
+- symmetry: "symmetric" | "asymmetric" | "bilateral"
+- suggestions: array of 3-5 professional suggestions
+
+Return ONLY valid JSON, no markdown.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
+  }
+
+  async generateColors(brief: any, logoColors: string[]): Promise<ColorSuggestion[]> {
+    const systemPrompt = `You are a professional brand color expert. Generate a cohesive color palette.`;
+    const userPrompt = `Brand: ${brief?.product || 'Unknown'}
+Industry: ${brief?.industry || 'General'}
+Personality: ${brief?.personality?.join(', ') || 'Professional'}
+Logo colors: ${logoColors.join(', ')}
+
+Generate 6-7 colors. Return JSON array with:
+- hex: color in hex
+- role: "primary" | "secondary" | "accent" | "neutral" | "background" | "surface" | "text"
+- reasoning: why this color works
+
+Return ONLY valid JSON array.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
+  }
+
+  async suggestTypography(brief: any, personality: string[]): Promise<TypographySuggestion[]> {
+    const systemPrompt = `You are a typography expert for brand identity.`;
+    const userPrompt = `Personality: ${personality.join(', ')}
+Industry: ${brief?.industry || 'General'}
+
+Suggest 2 Google Fonts. Return JSON array:
+- family: font name
+- role: "display" | "body"
+- reasoning: why it fits
+- pairing: what it pairs with
+
+Return ONLY valid JSON array.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
+  }
+
+  async generatePatterns(project: Project): Promise<PatternSuggestion[]> {
+    const systemPrompt = `You are a brand identity designer creating pattern concepts.`;
+    const userPrompt = `Brand: ${project.name}
+Industry: ${project.industry}
+
+Suggest 3 patterns. Return JSON array:
+- name: pattern name
+- direction: "geometric" | "organic" | "expressive"
+- description: what it looks like
+- derivedFrom: which brand element
+
+Return ONLY valid JSON array.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
+  }
+
+  async suggestPhotography(brief: any, colors: string[]): Promise<PhotographySuggestion> {
+    const systemPrompt = `You are an art director defining photography guidelines.`;
+    const userPrompt = `Brand: ${brief?.product || 'Unknown'}
+Personality: ${brief?.personality?.join(', ') || 'Professional'}
+Colors: ${colors.join(', ')}
+
+Define photography direction. Return JSON:
+- subjects: array of 4 subjects
+- lighting: lighting style
+- mood: overall mood
+- treatment: color treatment
+- references: array of 3 references
+
+Return ONLY valid JSON.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
+  }
+
+  async chat(messages: { role: string; content: string }[], context: Project): Promise<string> {
+    const systemPrompt = `You are a creative AI assistant for brand identity design. You know everything about the current project:
+- Brand: ${context.name}
+- Industry: ${context.industry}
+- Brief: ${JSON.stringify(context.brief)}
+- Colors: ${context.colors ? context.colors.tokens.map(t => `${t.name}: ${t.hex}`).join(', ') : 'Not defined'}
+- Typography: ${context.typography ? `${context.typography.display?.family || 'Not set'} / ${context.typography.body?.family || 'Not set'}` : 'Not defined'}
+
+Provide professional, specific, actionable advice. Be concise but insightful. Reference the actual brand context.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: this.model,
+        max_tokens: 500,
+        system: systemPrompt,
+        messages: messages,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Anthropic API error');
+    }
+
+    const data = await response.json();
+    return data.content[0].text;
+  }
+
+  async reviewDesign(element: any, _context: Project): Promise<ReviewResult[]> {
+    const systemPrompt = `You are a design reviewer.`;
+    const userPrompt = `Review: ${JSON.stringify(element)}
+
+Provide 3 issues. Return JSON array:
+- type: "issue" | "principle" | "recommendation"
+- category: design category
+- title: short title
+- description: specific description
+- severity: "low" | "medium" | "high"
+- actionable: boolean
+
+Return ONLY valid JSON array.`;
+
+    return await this.callAI(systemPrompt, userPrompt);
+  }
 }
 
-export function setAIProvider(provider: AIProvider) {
-  currentProvider = provider;
+// Provider factory
+export function createAIProvider(config: AIConfig): AIProvider {
+  if (config.provider === 'openai' && config.apiKey) {
+    return new OpenAIProvider(config.apiKey, config.model || 'gpt-4o');
+  }
+  if (config.provider === 'anthropic' && config.apiKey) {
+    return new AnthropicProvider(config.apiKey, config.model || 'claude-3-5-sonnet-20241022');
+  }
+  
+  // No provider configured
+  return {
+    name: 'Not Configured',
+    available: false,
+    analyzeLogo: async () => { throw new Error('AI not configured. Please add your API key in Settings.'); },
+    generateColors: async () => { throw new Error('AI not configured. Please add your API key in Settings.'); },
+    suggestTypography: async () => { throw new Error('AI not configured. Please add your API key in Settings.'); },
+    generatePatterns: async () => { throw new Error('AI not configured. Please add your API key in Settings.'); },
+    suggestPhotography: async () => { throw new Error('AI not configured. Please add your API key in Settings.'); },
+    chat: async () => { throw new Error('AI not configured. Please add your API key in Settings.'); },
+    reviewDesign: async () => { throw new Error('AI not configured. Please add your API key in Settings.'); },
+  };
+}
+
+// Get current provider
+export function getAIProvider(): AIProvider {
+  const config = getAIConfig();
+  return createAIProvider(config);
 }
 
 // Utility functions
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function adjustBrightness(hex: string, percent: number): string {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const amt = Math.round(2.55 * percent);
-  const R = Math.max(0, Math.min(255, (num >> 16) + amt));
-  const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00ff) + amt));
-  const B = Math.max(0, Math.min(255, (num & 0x0000ff) + amt));
-  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
-}
-
-// Color utility functions
 export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? {

@@ -67,8 +67,45 @@ interface AIProvider {
 }
 ```
 
-Current implementation: `MockAIProvider` — clearly identified as demo.
-To integrate a real provider: implement the interface and call `setAIProvider()`.
+### Real AI Integration (V1.1)
+
+**The AI is REAL and functional.** Two providers are implemented:
+
+1. **OpenAI** (GPT-4o, GPT-4, etc.)
+2. **Anthropic** (Claude 3.5 Sonnet, Claude 3 Opus, etc.)
+
+#### Configuration
+
+Users configure their AI provider in the **Settings** panel:
+- Select provider (OpenAI or Anthropic)
+- Enter API key (stored locally in browser, never sent to our servers)
+- Optionally specify model (defaults to gpt-4o or claude-3-5-sonnet)
+
+The API key is stored in localStorage under `brand-studio-ai-config`.
+
+#### How It Works
+
+- All AI calls go directly from the browser to the provider's API
+- No backend server required
+- API keys are stored client-side only
+- Users pay for their own API usage
+
+#### Features Powered by AI
+
+- **Logo Analysis**: Analyzes geometry, colors, complexity, symmetry
+- **Color Generation**: Creates cohesive palettes based on brand brief
+- **Typography Suggestions**: Recommends Google Font pairings
+- **Pattern Concepts**: Generates pattern directions from brand identity
+- **Photography Direction**: Defines subjects, lighting, mood, treatment
+- **Creative Copilot**: Contextual chat that knows the entire project
+
+#### Error Handling
+
+When AI is not configured or fails:
+- Clear error messages explain what's wrong
+- Users are directed to Settings to configure their API key
+- Manual workflows remain fully functional
+- No fake/mock responses — honest about limitations
 
 ## Persistence
 
@@ -87,21 +124,29 @@ Located in `src/knowledge.ts`. Categories:
 
 Each rule has: type (verified/principle/recommendation/issue), severity, actionability.
 
-## Limitations (V1)
+## Limitations (V1.1)
 
-- AI provider is mock/demo — no real generation
-- No actual image generation for patterns/mockups
+- No actual image generation for patterns/mockups (would need DALL-E, Midjourney, etc.)
 - Export is UI-only (PDF/image export needs backend or client-side library)
 - No real file upload to server (client-side only)
 - Photography references are text-based (no actual image search)
 - No collaborative features
+- Logo analysis is text-based (would benefit from vision API for actual image analysis)
+
+## What's Working
+
+✅ **Real AI Integration** - OpenAI and Anthropic fully functional
+✅ **Color Generation** - Real AI generates palettes based on brand brief
+✅ **Typography Suggestions** - Real AI recommends Google Font pairings
+✅ **Creative Copilot** - Real AI chat with full project context
+✅ **Photography Direction** - Real AI defines photography guidelines
+✅ **Pattern Concepts** - Real AI generates pattern directions
+✅ **Logo Analysis** - Text-based analysis (would benefit from vision API)
 
 ## What Needs External Provider
 
-- Real AI analysis (vision models for logo analysis)
-- Real color palette generation (LLM reasoning)
-- Real typography suggestions (font database + reasoning)
 - Real image generation (DALL-E, Midjourney, Stable Diffusion)
+- Vision API for actual logo image analysis (currently text-based)
 - Real PDF export (needs pdf-lib or server-side rendering)
 
 ## Next Steps (V2)

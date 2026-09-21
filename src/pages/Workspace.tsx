@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../store';
-import { getAIProvider, hexToRgb, rgbToHsl, getContrastRatio } from '../ai';
+import { getAIProvider, getAIConfig, hexToRgb, rgbToHsl, getContrastRatio } from '../ai';
 import type { Project, ColorToken, ContrastResult } from '../types';
 import {
   FileText, Image, Palette, Type, Shapes, Grid3X3, Camera,
@@ -76,7 +76,7 @@ export function Workspace() {
           })}
         </nav>
 
-        <div className="p-3 border-t border-[var(--color-border)]">
+        <div className="p-3 border-t border-[var(--color-border)] space-y-1">
           <button
             onClick={toggleCopilot}
             className={`sidebar-item w-full ${copilotOpen ? 'active' : ''}`}
@@ -84,6 +84,14 @@ export function Workspace() {
             <MessageSquare size={14} />
             <span>Creative Copilot</span>
           </button>
+          <div className="px-3 py-2">
+            <div className="flex items-center gap-2 text-[10px]">
+              <div className={`w-2 h-2 rounded-full ${getAIConfig().provider !== 'none' ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span className="text-[var(--color-text-tertiary)]">
+                {getAIConfig().provider !== 'none' ? 'AI Connected' : 'AI Disabled'}
+              </span>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -139,7 +147,9 @@ function BriefModule({ project }: { project: Project }) {
         project
       );
       setAiSuggestion(result);
-    } catch { setAiSuggestion('AI unavailable. Please fill in the brief manually.'); }
+    } catch (error: any) {
+      setAiSuggestion(`⚠️ ${error.message || 'AI not available'}. Please configure your AI provider in Settings or fill in the brief manually.`);
+    }
     setLoading(false);
   };
 
@@ -243,7 +253,17 @@ function LogoModule({ project }: { project: Project }) {
       const result = await ai.analyzeLogo(logoUrl);
       setAnalysis(result);
       updateProgress(project.id, 'logo', 'working');
-    } catch { setAnalysis(null); }
+    } catch (error: any) {
+      setAnalysis({
+        geometry: [],
+        shapes: [],
+        angles: [],
+        colors: [],
+        complexity: 'moderate',
+        symmetry: 'asymmetric',
+        suggestions: [`⚠️ ${error.message || 'AI analysis failed'}. Please configure your AI provider in Settings.`],
+      });
+    }
     setAnalyzing(false);
   };
 
@@ -434,7 +454,9 @@ function ColorModule({ project }: { project: Project }) {
       setContrastMatrix(matrix);
       setColors(project.id, { tokens: newTokens, harmony: 'analogous', temperature: 'neutral', contrastMatrix: matrix });
       updateProgress(project.id, 'color', 'working');
-    } catch { /* handle error */ }
+    } catch (error: any) {
+      alert(`⚠️ ${error.message || 'Failed to generate colors'}. Please configure your AI provider in Settings.`);
+    }
     setGenerating(false);
   };
 
@@ -587,11 +609,13 @@ function TypographyModule({ project }: { project: Project }) {
       const suggestions = await ai.suggestTypography(project.brief, project.brief?.personality || []);
       setDirections([
         { name: 'Direction A', fonts: suggestions },
-        { name: 'Direction B', fonts: suggestions.map(s => ({ ...s, family: s.family === 'Inter' ? 'DM Sans' : 'Inter' })) },
-        { name: 'Direction C', fonts: suggestions.map(s => ({ ...s, family: s.family === 'Inter' ? 'Work Sans' : 'Source Serif Pro' })) },
+        { name: 'Direction B', fonts: suggestions.map((s: any) => ({ ...s, family: s.family === 'Inter' ? 'DM Sans' : 'Inter' })) },
+        { name: 'Direction C', fonts: suggestions.map((s: any) => ({ ...s, family: s.family === 'Inter' ? 'Work Sans' : 'Source Serif Pro' })) },
       ]);
       updateProgress(project.id, 'type', 'working');
-    } catch { /* handle */ }
+    } catch (error: any) {
+      alert(`⚠️ ${error.message || 'Failed to generate typography'}. Please configure your AI provider in Settings.`);
+    }
     setGenerating(false);
   };
 
@@ -847,7 +871,9 @@ function PhotographyModule({ project }: { project: Project }) {
       const colors = project.colors?.tokens.map(t => t.hex) || ['#2563EB'];
       const result = await ai.suggestPhotography(project.brief, colors);
       setDirection(result);
-    } catch { /* handle */ }
+    } catch (error: any) {
+      alert(`⚠️ ${error.message || 'Failed to generate photography direction'}. Please configure your AI provider in Settings.`);
+    }
     setGenerating(false);
   };
 
@@ -1138,8 +1164,8 @@ function CopilotPanel({ project }: { project: Project }) {
         project
       );
       addCopilotMessage('assistant', response);
-    } catch {
-      addCopilotMessage('assistant', 'I\'m currently unavailable. Please try again later.');
+    } catch (error: any) {
+      addCopilotMessage('assistant', `⚠️ ${error.message || 'AI unavailable'}. Please configure your AI provider in Settings.`);
     }
     setLoading(false);
   };
