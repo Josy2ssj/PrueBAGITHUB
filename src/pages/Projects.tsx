@@ -1,3 +1,4 @@
+import { Dialog } from '../components/Dialog';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
@@ -11,7 +12,8 @@ export function ProjectsPage() {
   const [showSettings, setShowSettings] = useState(false);
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', description: '', industry: '' });
-  const aiConfig = getAIConfig();
+  const [query, setQuery] = useState('');
+  const visibleProjects = projects.filter(p => `${p.name} ${p.industry}`.toLowerCase().includes(query.toLowerCase()));
 
   const handleCreate = () => {
     if (!form.name.trim()) return;
@@ -28,10 +30,10 @@ export function ProjectsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)]">
+    <div className="projects-page">
       {/* Header */}
       <header className="border-b border-[var(--color-border)] bg-white">
-        <div className="max-w-6xl mx-auto px-8 py-6 flex items-center justify-between">
+        <div className="studio-header">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">B</span>
@@ -52,22 +54,21 @@ export function ProjectsPage() {
       </header>
 
       {/* Content */}
-      <main className="max-w-6xl mx-auto px-8 py-12">
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold tracking-tight mb-2">Projects</h2>
+      <main className="projects-content">
+        <div className="projects-heading">
+          <h2 className="projects-title">Projects</h2>
           <p className="text-[var(--color-text-secondary)] text-sm">
             Your brand identity workspaces. Start with a name and logo.
           </p>
         </div>
 
+        {projects.length > 0 && <div className="projects-toolbar"><span>{projects.length} {projects.length === 1 ? 'project' : 'projects'} <span className="text-[var(--color-text-tertiary)]"> / Saved in this browser</span></span><input aria-label="Search projects" className="input-field project-search" placeholder="Search projects…" value={query} onChange={e => setQuery(e.target.value)} /></div>}
         {projects.length === 0 ? (
-          <div className="text-center py-24">
-            <div className="w-16 h-16 bg-[var(--color-surface)] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Folder size={24} className="text-[var(--color-text-tertiary)]" />
-            </div>
-            <h3 className="text-lg font-medium mb-2">No projects yet</h3>
+          <div className="empty-studio">
+            <div className="empty-composition" aria-hidden="true"><div className="specimen-type">Aa<span>TYPE & FORM</span></div><div className="specimen-colors"><i /><i /><i /><i /></div><div className="specimen-mark"><Folder size={36} strokeWidth={1} /><span>YOUR NEXT IDENTITY</span></div></div>
+            <h3 className="text-lg font-medium mb-2">A new identity starts here.</h3>
             <p className="text-sm text-[var(--color-text-secondary)] mb-6">
-              Create your first brand project to get started.
+              Bring your name, your logo, and an idea. Build the rest here.
             </p>
             <button onClick={() => setShowNew(true)} className="btn-primary">
               Create Project
@@ -75,20 +76,20 @@ export function ProjectsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.map((project) => (
+            {visibleProjects.map((project) => (
               <div
                 key={project.id}
-                className="panel p-5 cursor-pointer hover-lift group relative"
-                onClick={() => handleOpen(project.id)}
+                className="panel project-card p-5 group relative"
               >
+                <button className="project-preview" aria-label={`Open ${project.name}`} onClick={() => handleOpen(project.id)}><span>{project.name.slice(0, 2)}</span><div className="project-swatches">{(project.colors?.tokens.slice(0, 5) || []).map(token => <i key={token.id} style={{ background: token.hex }} />)}</div><ArrowRight size={20} /></button>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm truncate">{project.name}</h3>
+                    <h3 className="font-semibold text-base truncate"><button onClick={() => handleOpen(project.id)}>{project.name}</button></h3>
                     <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">{project.industry || 'No industry'}</p>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === project.id ? null : project.id); }}
-                    className="p-1 rounded hover:bg-[var(--color-surface)] opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={`Actions for ${project.name}`} aria-expanded={menuOpen === project.id} className="icon-button"
                   >
                     <MoreVertical size={14} />
                   </button>
@@ -135,17 +136,18 @@ export function ProjectsPage() {
         )}
       </main>
 
+      {projects.length > 0 && visibleProjects.length === 0 && <p className="search-empty">No projects match “{query}”. <button className="btn-ghost" onClick={() => setQuery('')}>Clear search</button></p>}
       {/* New Project Modal */}
       {showNew && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowNew(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 fade-in" onClick={(e) => e.stopPropagation()}>
+        <Dialog title="New Project" onClose={() => setShowNew(false)}>
+          <form onSubmit={e => { e.preventDefault(); handleCreate(); }}>
             <h2 className="text-lg font-semibold mb-1">New Project</h2>
             <p className="text-sm text-[var(--color-text-secondary)] mb-6">Start with the essentials. You can add more later.</p>
             
             <div className="space-y-4">
               <div>
-                <label className="label mb-1.5 block">Brand Name *</label>
-                <input
+                <label htmlFor="project-field-1" className="label mb-1.5 block">Brand Name *</label>
+                <input id="project-field-1"
                   type="text"
                   className="input-field"
                   placeholder="e.g. Meridian"
@@ -155,8 +157,8 @@ export function ProjectsPage() {
                 />
               </div>
               <div>
-                <label className="label mb-1.5 block">Industry / Category</label>
-                <select
+                <label htmlFor="project-field-2" className="label mb-1.5 block">Industry / Category</label>
+                <select id="project-field-2"
                   className="input-field"
                   value={form.industry}
                   onChange={(e) => setForm({ ...form, industry: e.target.value })}
@@ -174,8 +176,8 @@ export function ProjectsPage() {
                 </select>
               </div>
               <div>
-                <label className="label mb-1.5 block">Short Description</label>
-                <textarea
+                <label htmlFor="project-field-3" className="label mb-1.5 block">Short Description</label>
+                <textarea id="project-field-3"
                   className="input-field resize-none"
                   rows={2}
                   placeholder="What does this brand do?"
@@ -186,13 +188,13 @@ export function ProjectsPage() {
             </div>
 
             <div className="flex items-center justify-end gap-3 mt-8">
-              <button onClick={() => setShowNew(false)} className="btn-secondary">Cancel</button>
-              <button onClick={handleCreate} className="btn-primary" disabled={!form.name.trim()}>
+              <button type="button" onClick={() => setShowNew(false)} className="btn-secondary">Cancel</button>
+              <button type="submit" className="btn-primary" disabled={!form.name.trim()}>
                 Create Project
               </button>
             </div>
-          </div>
-        </div>
+          </form>
+        </Dialog>
       )}
 
       {/* AI Settings Modal */}
@@ -212,8 +214,8 @@ function AISettingsModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 fade-in" onClick={(e) => e.stopPropagation()}>
+    <Dialog title="AI Configuration" onClose={onClose}>
+      <div>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-[var(--color-surface)] rounded-lg flex items-center justify-center">
             <Settings size={18} />
@@ -226,8 +228,8 @@ function AISettingsModal({ onClose }: { onClose: () => void }) {
 
         <div className="space-y-4">
           <div>
-            <label className="label mb-1.5 block">Provider</label>
-            <select
+            <label htmlFor="project-field-4" className="label mb-1.5 block">Provider</label>
+            <select id="project-field-4"
               className="input-field"
               value={config.provider}
               onChange={(e) => setConfig({ ...config, provider: e.target.value as any, apiKey: '', model: '' })}
@@ -241,8 +243,8 @@ function AISettingsModal({ onClose }: { onClose: () => void }) {
           {config.provider !== 'none' && (
             <>
               <div>
-                <label className="label mb-1.5 block">API Key</label>
-                <input
+                <label htmlFor="project-field-5" className="label mb-1.5 block">API Key</label>
+                <input id="project-field-5"
                   type="password"
                   className="input-field font-mono text-xs"
                   placeholder={config.provider === 'openai' ? 'sk-...' : 'sk-ant-...'}
@@ -255,8 +257,8 @@ function AISettingsModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div>
-                <label className="label mb-1.5 block">Model</label>
-                <input
+                <label htmlFor="project-field-6" className="label mb-1.5 block">Model</label>
+                <input id="project-field-6"
                   type="text"
                   className="input-field text-xs"
                   placeholder={config.provider === 'openai' ? 'gpt-4o' : 'claude-3-5-sonnet-20241022'}
@@ -302,6 +304,6 @@ function AISettingsModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }

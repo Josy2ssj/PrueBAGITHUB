@@ -35,7 +35,7 @@
 ## Colors
 
 ### Surfaces
-- `--color-surface`: #FAFAFA (page background)
+- `--color-surface`: #F7F7F5 (page background)
 - `--color-surface-raised`: #FFFFFF (cards, panels)
 - `--color-surface-overlay`: #FFFFFF (modals, popovers)
 
@@ -46,7 +46,7 @@
 ### Text
 - `--color-text-primary`: #171717
 - `--color-text-secondary`: #525252
-- `--color-text-tertiary`: #A3A3A3
+- `--color-text-tertiary`: #70706C
 
 ### Semantic
 - `--color-accent`: #2563EB (links, active states)
@@ -76,8 +76,8 @@
 ## Navigation
 
 ### Sidebar
-- Width: 224px (w-56)
-- Items: 32px height, 8px vertical gap
+- Width: 232px
+- Items: 42px minimum height
 - Active: black background, white text
 - Hover: subtle surface background
 - Progress dots: 8px circles (gray/yellow/green)
@@ -108,7 +108,7 @@
 
 ## Dialogs / Modals
 
-- Backdrop: black/20% + blur-sm
+- Backdrop: neutral dark overlay (30% opacity)
 - Container: white, 2xl radius, shadow-2xl
 - Max width: 448px (forms), 672px (complex)
 - Padding: 32px
@@ -133,24 +133,34 @@
 
 ## Motion
 
-- Duration: 150ms (micro), 300ms (transitions)
-- Easing: ease (default), ease-in-out (transforms)
+- Duration: 150ms (micro), 180–220ms (transitions)
+- Easing: ease (colors), cubic-bezier(.23,1,.32,1) (entrances)
 - Fade in: opacity 0→1 + translateY 4px→0
 - Hover lift: translateY -1px
 - Loading: pulse-soft (2s infinite)
 
 ## Accessibility
 
-- Minimum contrast: 4.5:1 (body text), 3:1 (large text)
+- Target minimum contrast: 4.5:1 (body text), 3:1 (large text)
 - Focus visible: 2px accent outline
-- Touch targets: minimum 32px
+- Touch targets: 40px icon controls and 44px action buttons on mobile
 - Keyboard navigation: all interactive elements tabbable
 - Screen reader: aria-labels on icon-only buttons
 
 ## Layout
 
-- Sidebar: fixed left, 224px
+- Sidebar: left column, 232px; collapsible below 700px
 - Main content: flex-1, overflow-y scroll
-- Copilot: fixed right, 320px (toggleable)
+- Copilot: 340px right column; overlays below 1100px (toggleable)
 - Content max-width: 896px (max-w-4xl) centered
 - Module padding: 32px
+
+## Visual refinement — September 2026
+
+- Preserve the neutral, editorial studio identity. Brand colors belong to project previews, not the application chrome.
+- Projects use a 1280px content container, a 32–46px title, typographic previews, and name/category search. Empty state uses a small type and color composition.
+- Desktop workspace includes breadcrumbs; mobile uses a compact header and a collapsible module menu. Module grids collapse to one column below 700px.
+- New-project and AI settings use the shared native Dialog component, with Escape dismissal, contained keyboard focus, and focus restoration.
+- Shared focus rings, readable secondary text, explicit disabled states, and touch-visible project actions.
+- Motion is restricted to feedback and panel entry; prefers-reduced-motion removes movement.
+- Export buttons remain disabled with an explanation until export is implemented.

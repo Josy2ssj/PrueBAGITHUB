@@ -7,7 +7,7 @@ import {
   FileText, Image, Palette, Type, Shapes, Grid3X3, Camera,
   MessageSquare, Sparkles, CheckCircle2, ArrowLeft, Send,
   Eye, Download, Layers, ChevronRight, Info, X,
-  RotateCcw, Target, Lightbulb
+  RotateCcw, Target, Lightbulb, Menu
 } from 'lucide-react';
 
 const MODULES = [
@@ -26,6 +26,7 @@ export function Workspace() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [navigationOpen, setNavigationOpen] = useState(false);
   const { projects, setActiveProject, updateProgress, toggleCopilot, copilotOpen } = useStore();
   const project = projects.find(p => p.id === projectId);
   
@@ -40,9 +41,11 @@ export function Workspace() {
   if (!project) return <div className="p-8">Project not found</div>;
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[var(--color-surface)]">
+    <div className="workspace-shell">
+      <div className="mobile-workspace-header"><button className="icon-button" aria-label="Toggle modules" aria-expanded={navigationOpen} onClick={() => setNavigationOpen(!navigationOpen)}><Menu size={20} /></button><strong>{project.name}</strong><button className="icon-button" aria-label="Open Creative Copilot" onClick={toggleCopilot}><MessageSquare size={20} /></button></div>
+      {navigationOpen && <button className="navigation-backdrop" aria-label="Close modules" onClick={() => setNavigationOpen(false)} />}
       {/* Sidebar */}
-      <aside className="w-56 border-r border-[var(--color-border)] bg-white flex flex-col shrink-0">
+      <aside className={`workspace-sidebar ${navigationOpen ? 'is-open' : ''}`}>
         <div className="p-4 border-b border-[var(--color-border)]">
           <button onClick={() => navigate('/')} className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
             <ArrowLeft size={12} /> All Projects
@@ -65,7 +68,8 @@ export function Workspace() {
             return (
               <button
                 key={mod.id}
-                onClick={() => navigate(`/workspace/${projectId}/${mod.id}`)}
+                aria-current={isActive ? 'page' : undefined}
+                onClick={() => { navigate(`/workspace/${projectId}/${mod.id}`); setNavigationOpen(false); }}
                 className={`sidebar-item w-full ${isActive ? 'active' : ''}`}
               >
                 <Icon size={14} />
@@ -78,7 +82,7 @@ export function Workspace() {
 
         <div className="p-3 border-t border-[var(--color-border)] space-y-1">
           <button
-            onClick={toggleCopilot}
+            onClick={() => { toggleCopilot(); setNavigationOpen(false); }}
             className={`sidebar-item w-full ${copilotOpen ? 'active' : ''}`}
           >
             <MessageSquare size={14} />
@@ -88,7 +92,7 @@ export function Workspace() {
             <div className="flex items-center gap-2 text-[10px]">
               <div className={`w-2 h-2 rounded-full ${getAIConfig().provider !== 'none' ? 'bg-green-500' : 'bg-gray-300'}`} />
               <span className="text-[var(--color-text-tertiary)]">
-                {getAIConfig().provider !== 'none' ? 'AI Connected' : 'AI Disabled'}
+                {getAIConfig().provider !== 'none' && getAIConfig().apiKey ? 'AI configured' : 'AI not configured'}
               </span>
             </div>
           </div>
@@ -96,7 +100,7 @@ export function Workspace() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto scrollbar-thin">
+      <main className="workspace-main scrollbar-thin"><div className="workspace-breadcrumb"><span>{project.name}</span><ChevronRight size={13} /><strong>{MODULES.find(m => m.id === currentModule)?.label}</strong><span className="local-save">Local workspace</span></div>
         {currentModule === 'brief' && <BriefModule project={project} />}
         {currentModule === 'logo' && <LogoModule project={project} />}
         {currentModule === 'color' && <ColorModule project={project} />}
@@ -185,12 +189,12 @@ function BriefModule({ project }: { project: Project }) {
 
       <div className="space-y-6">
         <div>
-          <label className="label mb-1.5 block">Product / Service</label>
-          <input className="input-field" placeholder="What does the brand offer?" value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} />
+          <label htmlFor="workspace-field-1" className="label mb-1.5 block">Product / Service</label>
+          <input id="workspace-field-1" className="input-field" placeholder="What does the brand offer?" value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} />
         </div>
         <div>
-          <label className="label mb-1.5 block">Target Audience</label>
-          <input className="input-field" placeholder="Who is this for?" value={form.audience} onChange={(e) => setForm({ ...form, audience: e.target.value })} />
+          <label htmlFor="workspace-field-2" className="label mb-1.5 block">Target Audience</label>
+          <input id="workspace-field-2" className="input-field" placeholder="Who is this for?" value={form.audience} onChange={(e) => setForm({ ...form, audience: e.target.value })} />
         </div>
         <div>
           <label className="label mb-1.5 block">Brand Personality</label>
@@ -207,16 +211,16 @@ function BriefModule({ project }: { project: Project }) {
           </div>
         </div>
         <div>
-          <label className="label mb-1.5 block">Positioning</label>
-          <input className="input-field" placeholder="How is this brand different?" value={form.positioning} onChange={(e) => setForm({ ...form, positioning: e.target.value })} />
+          <label htmlFor="workspace-field-3" className="label mb-1.5 block">Positioning</label>
+          <input id="workspace-field-3" className="input-field" placeholder="How is this brand different?" value={form.positioning} onChange={(e) => setForm({ ...form, positioning: e.target.value })} />
         </div>
         <div>
-          <label className="label mb-1.5 block">Tone of Voice</label>
-          <input className="input-field" placeholder="e.g. Confident, Warm, Technical" value={form.tone} onChange={(e) => setForm({ ...form, tone: e.target.value })} />
+          <label htmlFor="workspace-field-4" className="label mb-1.5 block">Tone of Voice</label>
+          <input id="workspace-field-4" className="input-field" placeholder="e.g. Confident, Warm, Technical" value={form.tone} onChange={(e) => setForm({ ...form, tone: e.target.value })} />
         </div>
         <div>
-          <label className="label mb-1.5 block">Things to Avoid</label>
-          <input className="input-field" placeholder="e.g. Clip art, neon colors, overly playful" value={form.avoid.join(', ')} onChange={(e) => setForm({ ...form, avoid: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} />
+          <label htmlFor="workspace-field-5" className="label mb-1.5 block">Things to Avoid</label>
+          <input id="workspace-field-5" className="input-field" placeholder="e.g. Clip art, neon colors, overly playful" value={form.avoid.join(', ')} onChange={(e) => setForm({ ...form, avoid: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} />
         </div>
       </div>
 
@@ -1126,12 +1130,13 @@ function PresentationModule({ project }: { project: Project }) {
             </div>
           </div>
 
+          <p className="text-center text-sm text-[var(--color-text-secondary)] mt-6">Export is not available yet. Your presentation stays in this browser.</p>
           {/* Export */}
           <div className="mt-6 flex justify-center gap-3">
-            <button className="btn-primary flex items-center gap-2">
+            <button disabled title="PDF export is not implemented yet" className="btn-primary flex items-center gap-2">
               <Download size={14} /> Export PDF
             </button>
-            <button className="btn-secondary flex items-center gap-2">
+            <button disabled title="Image export is not implemented yet" className="btn-secondary flex items-center gap-2">
               <Download size={14} /> Export Images
             </button>
           </div>
@@ -1150,11 +1155,11 @@ function CopilotPanel({ project }: { project: Project }) {
   const ai = getAIProvider();
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }, [copilotMessages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || loading) return;
     addCopilotMessage('user', input);
     setInput('');
     setLoading(true);
@@ -1184,7 +1189,7 @@ function CopilotPanel({ project }: { project: Project }) {
           <Sparkles size={14} className="text-[var(--color-accent)]" />
           <span className="text-sm font-semibold">Creative Copilot</span>
         </div>
-        <button onClick={toggleCopilot} className="p-1 rounded hover:bg-[var(--color-surface)]">
+        <button onClick={toggleCopilot} aria-label="Close Creative Copilot" className="icon-button">
           <X size={14} />
         </button>
       </div>
@@ -1231,12 +1236,12 @@ function CopilotPanel({ project }: { project: Project }) {
         <div className="flex gap-2">
           <input
             className="input-field text-xs"
-            placeholder="Ask about your brand..."
+            aria-label="Message Creative Copilot" placeholder="Ask about your brand..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           />
-          <button onClick={handleSend} className="p-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors" disabled={!input.trim() || loading}>
+          <button aria-label="Send message" onClick={handleSend} className="p-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors" disabled={!input.trim() || loading}>
             <Send size={12} />
           </button>
         </div>
