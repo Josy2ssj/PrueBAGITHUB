@@ -164,3 +164,9 @@
 - Shared focus rings, readable secondary text, explicit disabled states, and touch-visible project actions.
 - Motion is restricted to feedback and panel entry; prefers-reduced-motion removes movement.
 - Export buttons remain disabled with an explanation until export is implemented.
+
+## Crimson theme — user-selected direction
+
+The user requested red tones and gradients throughout the UI. This supersedes the neutral application palette above. Use crimson-to-coral gradients for primary buttons, active navigation, and project covers; pale rose gradients for page backgrounds, sidebar, headers, dialogs, and Copilot. Deep burgundy text maintains readable contrast. Preserve project-specific artwork colors and semantic success/warning states. No animated gradients.
+
+Current tokens: surface #FFF3F2, raised/overlay #FFFAF9, border #EBC8C6, subtle border #F5DEDC, primary text #47151D, secondary #7E3942, tertiary #8A4850, accent #B51E37, hover #93152C.

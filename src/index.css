@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-surface: #F7F7F5;
-  --color-surface-raised: #FFFFFF;
-  --color-surface-overlay: #FFFFFF;
-  --color-border: #E5E5E5;
-  --color-border-subtle: #F0F0F0;
-  --color-text-primary: #171717;
-  --color-text-secondary: #525252;
-  --color-text-tertiary: #70706C;
-  --color-accent: #2563EB;
-  --color-accent-hover: #1D4ED8;
+  --color-surface: #FFF3F2;
+  --color-surface-raised: #FFFAF9;
+  --color-surface-overlay: #FFFAF9;
+  --color-border: #EBC8C6;
+  --color-border-subtle: #F5DEDC;
+  --color-text-primary: #47151D;
+  --color-text-secondary: #7E3942;
+  --color-text-tertiary: #8A4850;
+  --color-accent: #B51E37;
+  --color-accent-hover: #93152C;
   --color-success: #16A34A;
   --color-warning: #D97706;
   --color-error: #DC2626;
@@ -33,7 +33,7 @@
   }
 
   ::selection {
-    background: #2563EB20;
+    background: #B51E3720;
   }
 }
 
@@ -74,7 +74,7 @@
     font-size: 13px;
     font-weight: 500;
     border: 1px solid var(--color-border);
-    transition: all 0.15s ease;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms ease;
     cursor: pointer;
   }
   .btn-secondary:hover {
@@ -89,7 +89,7 @@
     border-radius: 6px;
     font-size: 13px;
     font-weight: 500;
-    transition: all 0.15s ease;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms ease;
     cursor: pointer;
   }
   .btn-ghost:hover {
@@ -134,7 +134,7 @@
   }
   .input-field:focus {
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px #2563EB10;
+    box-shadow: 0 0 0 3px #B51E3710;
   }
 
   .label {
@@ -155,7 +155,7 @@
     font-weight: 500;
     color: var(--color-text-secondary);
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms ease;
   }
   .sidebar-item:hover {
     background: var(--color-surface);
@@ -238,7 +238,7 @@
     appearance: none;
     width: 100%;
     height: 4px;
-    background: #E5E5E5;
+    background: #EBC8C6;
     border-radius: 2px;
     outline: none;
   }
@@ -248,14 +248,14 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #171717;
+    background: #47151D;
     cursor: pointer;
     border: 2px solid white;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
   }
 
   .skeleton {
-    background: linear-gradient(90deg, #F4F4F5 25%, #E5E5E5 50%, #F4F4F5 75%);
+    background: linear-gradient(90deg, #F4F4F5 25%, #EBC8C6 50%, #F4F4F5 75%);
     background-size: 200% 100%;
     animation: skeleton 1.5s ease-in-out infinite;
     border-radius: 8px;
@@ -275,7 +275,7 @@ button { cursor: pointer; }
 button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
 input, textarea { caret-color: var(--color-accent); }
-input::placeholder, textarea::placeholder { color: #70706C; }
+input::placeholder, textarea::placeholder { color: #8A4850; }
 button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 button:active:not(:disabled) { transform: scale(.98); }
 button:focus-visible:active { transform: none; }
@@ -308,7 +308,7 @@ button:focus-visible:active { transform: none; }
 .project-swatches { display: flex; position: absolute; bottom: 18px; left: 18px; gap: 4px; }
 .project-swatches i { height: 15px; width: 15px; border-radius: 50%; border: 1px solid #0002; }
 .search-empty { max-width: 1184px; padding: 0 24px 40px; margin: auto; text-align: center; }
-.studio-dialog { padding: 0; border: 0; border-radius: 16px; width: min(520px, calc(100% - 32px)); max-height: calc(100dvh - 32px); margin: auto; color: var(--color-text-primary); background: white; box-shadow: 0 24px 80px #17171726; }
+.studio-dialog { padding: 0; border: 0; border-radius: 16px; width: min(520px, calc(100% - 32px)); max-height: calc(100dvh - 32px); margin: auto; color: var(--color-text-primary); background: white; box-shadow: 0 24px 80px #47151D26; }
 .studio-dialog::backdrop { background: #1a1a184d; }
 .studio-dialog[open] { animation: dialog-enter 200ms var(--ease-out); }
 .dialog-content { padding: 36px; position: relative; }
@@ -362,7 +362,7 @@ button:focus-visible:active { transform: none; }
   .mobile-workspace-header strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
   .workspace-sidebar { position: fixed; left: 0; top: 60px; bottom: 0; z-index: 35; transform: translateX(-100%); visibility: hidden; transition: transform 200ms var(--ease-out), visibility 200ms; }
   .workspace-sidebar.is-open { transform: none; visibility: visible; }
-  .navigation-backdrop { display: block; position: fixed; inset: 60px 0 0; background: #17171745; z-index: 30; }
+  .navigation-backdrop { display: block; position: fixed; inset: 60px 0 0; background: #47151D45; z-index: 30; }
   .workspace-breadcrumb { padding: 15px 20px; min-height: 52px; }
   .workspace-breadcrumb .local-save { display: none; }
   .workspace-main > div:not(.workspace-breadcrumb) { padding: 28px 20px 40px; }
@@ -379,3 +379,43 @@ button:focus-visible:active { transform: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   button:active:not(:disabled), .hover-lift:hover, .btn-primary:hover { transform: none; }
 }
+
+/* Crimson studio theme: interface surfaces, independent of project palettes. */
+:root {
+  --studio-gradient: linear-gradient(125deg, #8D142D 0%, #BD203C 55%, #D83B45 100%);
+  --studio-wash: linear-gradient(135deg, #FFF8F5 0%, #FCE5E6 60%, #F6D2D8 100%);
+}
+.projects-page, .workspace-shell { background: var(--studio-wash); }
+.projects-page > header { background: linear-gradient(110deg, #FFF9F7, #FAD9DF); }
+.studio-accent, .btn-primary, .sidebar-item.active { background: var(--studio-gradient); color: #FFF9F8; }
+.btn-primary:hover { background: linear-gradient(125deg, #741025, #A81935 60%, #C32E3B); }
+.btn-secondary { background: #FFF8F5; border-color: #DBA8AF; }
+.btn-secondary:hover, .btn-ghost:hover, .icon-button:hover { background: #F7DADF; border-color: #CD8B97; color: #72182D; }
+.panel { background: linear-gradient(145deg, #FFFCFA, #FFF0F0); }
+.panel-subtle { background: #FBE6E8; }
+.empty-studio { background: linear-gradient(120deg, #FFFAF7, #F9DCE1); }
+.empty-composition { border-color: #DFA9B2; }
+.specimen-type { background: linear-gradient(145deg, #FADBE0, #EDACB8); color: #69182B; }
+.specimen-mark { background: linear-gradient(135deg, #A81735, #D03A49); color: #FFF6F1; }
+.specimen-colors i { background: #72152D; }
+.specimen-colors i:nth-child(2) { background: #AF243F; }
+.specimen-colors i:nth-child(3) { background: #DB6170; }
+.specimen-colors i:nth-child(4) { background: #F1B1B8; }
+.project-preview { background: linear-gradient(125deg, #8D142D, #BF2E46 65%, #DE666C); color: #FFF5EE; }
+.project-preview:hover { background: linear-gradient(125deg, #771128, #A9233D 65%, #CF505E); }
+.workspace-sidebar { background: linear-gradient(180deg, #FFF8F6, #F9DEE3); }
+.workspace-breadcrumb, .mobile-workspace-header { background: linear-gradient(110deg, #FFF8F5, #FADDE1); }
+.copilot-panel { background: linear-gradient(165deg, #FFFAF7, #FBE5E8); }
+.studio-dialog { background: linear-gradient(145deg, #FFFCFA, #FCE8EA); box-shadow: 0 24px 80px #62162D30; }
+.studio-dialog::backdrop { background: #47151D66; }
+.input-field { background: #FFFCFB; border-color: #DDB4BA; }
+.input-field:focus { border-color: #B51E37; box-shadow: 0 0 0 3px #B51E3718; }
+input::placeholder, textarea::placeholder { color: #8A4850; }
+.progress-dot.pending { background: #CB9EA6; }
+.badge-draft { background: #F3DDE2; color: #7E3942; }
+.range-input { background: #EBC8CE; accent-color: #B51E37; }
+.range-input::-webkit-slider-thumb { background: #B51E37; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #CF9BA5; }
+.projects-page { scrollbar-color: #CF9BA5 #FFF3F2; }
+.projects-page .absolute.bg-white { background: #FFF8F6; }
+@media (hover: none) { .project-preview:hover { background: linear-gradient(125deg, #8D142D, #BF2E46 65%, #DE666C); } }

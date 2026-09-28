@@ -683,7 +683,7 @@ function TypographyModule({ project }: { project: Project }) {
               <button
                 key={i}
                 onClick={() => setSelected(i)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${selected === i ? 'bg-black text-white' : 'bg-white border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-text-tertiary)]'}`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${selected === i ? 'studio-accent text-white' : 'bg-white border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-text-tertiary)]'}`}
               >
                 {dir.name}
               </button>
@@ -1204,7 +1204,7 @@ function CopilotPanel({ project }: { project: Project }) {
         )}
         {copilotMessages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${msg.role === 'user' ? 'bg-black text-white' : 'bg-[var(--color-surface)] text-[var(--color-text-secondary)]'}`}>
+            <div className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${msg.role === 'user' ? 'studio-accent text-white' : 'bg-[var(--color-surface)] text-[var(--color-text-secondary)]'}`}>
               {msg.content}
             </div>
           </div>
@@ -1241,7 +1241,7 @@ function CopilotPanel({ project }: { project: Project }) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           />
-          <button aria-label="Send message" onClick={handleSend} className="p-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors" disabled={!input.trim() || loading}>
+          <button aria-label="Send message" onClick={handleSend} className="p-2 rounded-lg studio-accent text-white transition-colors" disabled={!input.trim() || loading}>
             <Send size={12} />
           </button>
         </div>

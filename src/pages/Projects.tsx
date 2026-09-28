@@ -35,7 +35,7 @@ export function ProjectsPage() {
       <header className="border-b border-[var(--color-border)] bg-white">
         <div className="studio-header">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 studio-accent rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">B</span>
             </div>
             <h1 className="text-lg font-semibold tracking-tight">Brand Studio</h1>
